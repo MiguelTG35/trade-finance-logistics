@@ -17,7 +17,7 @@
 package main
 
 import (
-	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
 func getTradeKey(stub shim.ChaincodeStubInterface, tradeID string) (string, error) {
