@@ -17,14 +17,14 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
+	"errors"
 	"strconv"
 	"strings"
+	"encoding/json"
 
-	"github.com/hyperledger/fabric-chaincode-go/shim"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric/core/chaincode/shim"
+	pb "github.com/hyperledger/fabric/protos/peer"
 )
 
 // TradeWorkflowChaincode implementation
@@ -38,16 +38,16 @@ func (t *TradeWorkflowChaincode) Init(stub shim.ChaincodeStubInterface) pb.Respo
 	var err error
 
 	if len(args) != 8 {
-		err = errors.New(fmt.Sprintf("Incorrect number of arguments. Expecting 8: {"+
-			"Exporter, "+
-			"Exporter's Bank, "+
-			"Exporter's Account Balance, "+
-			"Importer, "+
-			"Importer's Bank, "+
-			"Importer's Account Balance, "+
-			"Carrier, "+
-			"Regulatory Authority"+
-			"}. Found %d", len(args)))
+		err = errors.New(fmt.Sprintf("Incorrect number of arguments. Expecting 8: {" +
+					     "Exporter, " +
+					     "Exporter's Bank, " +
+					     "Exporter's Account Balance, " +
+					     "Importer, " +
+					     "Importer's Bank, " +
+					     "Importer's Account Balance, " +
+					     "Carrier, " +
+					     "Regulatory Authority" +
+					     "}. Found %d", len(args)))
 		return shim.Error(err.Error())
 	}
 
@@ -73,7 +73,7 @@ func (t *TradeWorkflowChaincode) Init(stub shim.ChaincodeStubInterface) pb.Respo
 	fmt.Printf("Regulatory Authority: %s\n", args[7])
 
 	// Map participant identities to their roles on the ledger
-	roleKeys := []string{expKey, ebKey, expBalKey, impKey, ibKey, impBalKey, carKey, raKey}
+	roleKeys := []string{ expKey, ebKey, expBalKey, impKey, ibKey, impBalKey, carKey, raKey }
 	for i, roleKey := range roleKeys {
 		err = stub.PutState(roleKey, []byte(args[i]))
 		if err != nil {
@@ -159,7 +159,7 @@ func (t *TradeWorkflowChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Res
 	} else if function == "getAccountBalance" {
 		// Get account balance: Exporter/Importer
 		return t.getAccountBalance(stub, creatorOrg, creatorCertIssuer, args)
-		/*} else if function == "delete" {
+	/*} else if function == "delete" {
 		// Deletes an entity from its state
 		return t.delete(stub, creatorOrg, creatorCertIssuer, args)*/
 	}
@@ -764,7 +764,7 @@ func (t *TradeWorkflowChaincode) acceptShipmentAndIssueBL(stub shim.ChaincodeStu
 
 	// Create and record a B/L
 	billOfLading = &BillOfLading{args[1], args[2], string(exporterBytes), string(carrierBytes), tradeAgreement.DescriptionOfGoods,
-		tradeAgreement.Amount, string(beneficiaryBytes), args[3], args[4]}
+				     tradeAgreement.Amount, string(beneficiaryBytes), args[3], args[4]}
 	billOfLadingBytes, err = json.Marshal(billOfLading)
 	if err != nil {
 		return shim.Error("Error marshaling bill of lading structure")
@@ -848,16 +848,16 @@ func (t *TradeWorkflowChaincode) requestPayment(stub shim.ChaincodeStubInterface
 		return shim.Error(err.Error())
 	}
 
-	if len(paymentBytes) != 0 { // The value doesn't matter as this is a temporary key used as a marker
+	if len(paymentBytes) != 0 {	// The value doesn't matter as this is a temporary key used as a marker
 		fmt.Printf("Payment request already pending for trade %s\n", args[0])
 	} else {
 		// Check what has been paid up to this point
 		fmt.Printf("Amount paid thus far for trade %s = %d; total required = %d\n", args[0], tradeAgreement.Payment, tradeAgreement.Amount)
-		if tradeAgreement.Amount == tradeAgreement.Payment { // Payment has already been settled
+		if tradeAgreement.Amount == tradeAgreement.Payment {	// Payment has already been settled
 			fmt.Printf("Payment already settled for trade %s\n", args[0])
 			return shim.Error("Payment already settled")
 		}
-		if string(shipmentLocationBytes) == SOURCE && tradeAgreement.Payment != 0 { // Suppress duplicate requests for partial payment
+		if string(shipmentLocationBytes) == SOURCE && tradeAgreement.Payment != 0 {	// Suppress duplicate requests for partial payment
 			fmt.Printf("Partial payment already made for trade %s\n", args[0])
 			return shim.Error("Partial payment already made")
 		}
@@ -962,7 +962,7 @@ func (t *TradeWorkflowChaincode) makePayment(stub shim.ChaincodeStubInterface, c
 
 	// Record transfer of funds
 	if string(shipmentLocationBytes) == SOURCE {
-		paymentAmount = tradeAgreement.Amount / 2
+		paymentAmount = tradeAgreement.Amount/2
 	} else {
 		paymentAmount = tradeAgreement.Amount - tradeAgreement.Payment
 	}
