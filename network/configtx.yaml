@@ -363,6 +363,7 @@ Profiles:
                     - *CarrierOrg
                     - *RegulatorOrg
     FourOrgsTradeChannel:
+        <<: *ChannelDefaults
         Consortium: TradeConsortium
         Application:
             <<: *ApplicationDefaults
