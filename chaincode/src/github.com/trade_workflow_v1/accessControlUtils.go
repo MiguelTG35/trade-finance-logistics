@@ -18,11 +18,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/hyperledger/fabric/core/chaincode/lib/cid"
-	"crypto/x509"
-)
+	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
 
+	"crypto/x509"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
+)
 
 func getTxCreatorInfo(stub shim.ChaincodeStubInterface) (string, string, error) {
 	var mspid string

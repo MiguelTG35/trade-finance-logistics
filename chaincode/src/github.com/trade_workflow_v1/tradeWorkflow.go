@@ -17,14 +17,14 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
-	"encoding/json"
 
-	"github.com/hyperledger/fabric/core/chaincode/shim"
-	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
+	pb "github.com/hyperledger/fabric-protos-go/peer"
 )
 
 // TradeWorkflowChaincode implementation
@@ -44,16 +44,20 @@ func (t *TradeWorkflowChaincode) Init(stub shim.ChaincodeStubInterface) pb.Respo
 
 	// Upgrade mode 2: change all the names and account balances
 	if len(args) != 8 {
-		err = errors.New(fmt.Sprintf("Incorrect number of arguments. Expecting 8: {" +
-					     "Exporter, " +
-					     "Exporter's Bank, " +
-					     "Exporter's Account Balance, " +
-					     "Importer, " +
-					     "Importer's Bank, " +
-					     "Importer's Account Balance, " +
-					     "Carrier, " +
-					     "Regulatory Authority" +
-					     "}. Found %d", len(args)))
+		err = errors.New(
+			fmt.Sprintf(
+				"Incorrect number of arguments. Expecting 8: {"+
+					"Exporter, "+
+					"Exporter's Bank, "+
+					"Exporter's Account Balance, "+
+					"Importer, "+
+					"Importer's Bank, "+
+					"Importer's Account Balance, "+
+					"Carrier, "+
+					"Regulatory Authority"+
+					"}. Found %d", len(args),
+			),
+		)
 		return shim.Error(err.Error())
 	}
 
@@ -79,7 +83,7 @@ func (t *TradeWorkflowChaincode) Init(stub shim.ChaincodeStubInterface) pb.Respo
 	fmt.Printf("Regulatory Authority: %s\n", args[7])
 
 	// Map participant identities to their roles on the ledger
-	roleKeys := []string{ expKey, ebKey, expBalKey, impKey, ibKey, impBalKey, carKey, raKey }
+	roleKeys := []string{expKey, ebKey, expBalKey, impKey, ibKey, impBalKey, carKey, raKey}
 	for i, roleKey := range roleKeys {
 		err = stub.PutState(roleKey, []byte(args[i]))
 		if err != nil {
@@ -161,7 +165,7 @@ func (t *TradeWorkflowChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Res
 	} else if function == "getAccountBalance" {
 		// Get account balance: Exporter/Importer
 		return t.getAccountBalance(stub, creatorOrg, creatorCertIssuer, args)
-	/*} else if function == "delete" {
+		/*} else if function == "delete" {
 		// Deletes an entity from its state
 		return t.delete(stub, creatorOrg, creatorCertIssuer, args)*/
 	}
@@ -170,7 +174,8 @@ func (t *TradeWorkflowChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Res
 }
 
 // Request a trade agreement
-func (t *TradeWorkflowChaincode) requestTrade(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) requestTrade(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var tradeKey string
 	var tradeAgreement *TradeAgreement
 	var tradeAgreementBytes []byte
@@ -185,7 +190,11 @@ func (t *TradeWorkflowChaincode) requestTrade(stub shim.ChaincodeStubInterface, 
 	}
 
 	if len(args) != 3 {
-		err = errors.New(fmt.Sprintf("Incorrect number of arguments. Expecting 3: {ID, Amount, Description of Goods}. Found %d", len(args)))
+		err = errors.New(
+			fmt.Sprintf(
+				"Incorrect number of arguments. Expecting 3: {ID, Amount, Description of Goods}. Found %d", len(args),
+			),
+		)
 		return shim.Error(err.Error())
 	}
 
@@ -194,8 +203,8 @@ func (t *TradeWorkflowChaincode) requestTrade(stub shim.ChaincodeStubInterface, 
 		return shim.Error(err.Error())
 	}
 
-	// ADD TRADE LIMIT CHECK HERE 
-	
+	// ADD TRADE LIMIT CHECK HERE
+
 	tradeAgreement = &TradeAgreement{amount, args[2], REQUESTED, 0}
 	tradeAgreementBytes, err = json.Marshal(tradeAgreement)
 	if err != nil {
@@ -217,7 +226,8 @@ func (t *TradeWorkflowChaincode) requestTrade(stub shim.ChaincodeStubInterface, 
 }
 
 // Accept a trade agreement
-func (t *TradeWorkflowChaincode) acceptTrade(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) acceptTrade(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var tradeKey string
 	var tradeAgreement *TradeAgreement
 	var tradeAgreementBytes []byte
@@ -274,7 +284,8 @@ func (t *TradeWorkflowChaincode) acceptTrade(stub shim.ChaincodeStubInterface, c
 }
 
 // Request an L/C
-func (t *TradeWorkflowChaincode) requestLC(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) requestLC(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var tradeKey, lcKey string
 	var tradeAgreementBytes, letterOfCreditBytes, exporterBytes []byte
 	var tradeAgreement *TradeAgreement
@@ -345,7 +356,8 @@ func (t *TradeWorkflowChaincode) requestLC(stub shim.ChaincodeStubInterface, cre
 
 // Issue an L/C
 // We don't need to check the trade status if the L/C request has already been recorded
-func (t *TradeWorkflowChaincode) issueLC(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) issueLC(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string,
+	args []string) pb.Response {
 	var lcKey string
 	var letterOfCreditBytes []byte
 	var letterOfCredit *LetterOfCredit
@@ -357,7 +369,12 @@ func (t *TradeWorkflowChaincode) issueLC(stub shim.ChaincodeStubInterface, creat
 	}
 
 	if len(args) < 3 {
-		err = errors.New(fmt.Sprintf("Incorrect number of arguments. Expecting at least 3: {Trade ID, L/C ID, Expiry Date} [List of Documents]. Found %d", len(args)))
+		err = errors.New(
+			fmt.Sprintf(
+				"Incorrect number of arguments. Expecting at least 3: {Trade ID, L/C ID, Expiry Date} [List of Documents]. Found %d",
+				len(args),
+			),
+		)
 		return shim.Error(err.Error())
 	}
 
@@ -402,7 +419,8 @@ func (t *TradeWorkflowChaincode) issueLC(stub shim.ChaincodeStubInterface, creat
 }
 
 // Accept an L/C
-func (t *TradeWorkflowChaincode) acceptLC(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) acceptLC(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string,
+	args []string) pb.Response {
 	var lcKey string
 	var letterOfCreditBytes []byte
 	var letterOfCredit *LetterOfCredit
@@ -457,7 +475,8 @@ func (t *TradeWorkflowChaincode) acceptLC(stub shim.ChaincodeStubInterface, crea
 }
 
 // Request an E/L
-func (t *TradeWorkflowChaincode) requestEL(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) requestEL(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var tradeKey, lcKey, elKey string
 	var tradeAgreementBytes, letterOfCreditBytes, exportLicenseBytes, exporterBytes, carrierBytes, approverBytes []byte
 	var tradeAgreement *TradeAgreement
@@ -542,7 +561,10 @@ func (t *TradeWorkflowChaincode) requestEL(stub shim.ChaincodeStubInterface, cre
 		return shim.Error(err.Error())
 	}
 
-	exportLicense = &ExportLicense{"", "", string(exporterBytes), string(carrierBytes), tradeAgreement.DescriptionOfGoods, string(approverBytes), REQUESTED}
+	exportLicense = &ExportLicense{
+		"", "", string(exporterBytes), string(carrierBytes), tradeAgreement.DescriptionOfGoods, string(approverBytes),
+		REQUESTED,
+	}
 	exportLicenseBytes, err = json.Marshal(exportLicense)
 	if err != nil {
 		return shim.Error("Error marshaling export license structure")
@@ -563,7 +585,8 @@ func (t *TradeWorkflowChaincode) requestEL(stub shim.ChaincodeStubInterface, cre
 }
 
 // Issue an E/L
-func (t *TradeWorkflowChaincode) issueEL(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) issueEL(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string,
+	args []string) pb.Response {
 	var elKey string
 	var exportLicenseBytes []byte
 	var exportLicense *ExportLicense
@@ -575,7 +598,11 @@ func (t *TradeWorkflowChaincode) issueEL(stub shim.ChaincodeStubInterface, creat
 	}
 
 	if len(args) != 3 {
-		err = errors.New(fmt.Sprintf("Incorrect number of arguments. Expecting 3: {Trade ID, L/C ID, Expiry Date}. Found %d", len(args)))
+		err = errors.New(
+			fmt.Sprintf(
+				"Incorrect number of arguments. Expecting 3: {Trade ID, L/C ID, Expiry Date}. Found %d", len(args),
+			),
+		)
 		return shim.Error(err.Error())
 	}
 
@@ -618,7 +645,8 @@ func (t *TradeWorkflowChaincode) issueEL(stub shim.ChaincodeStubInterface, creat
 }
 
 // Prepare a shipment; preparation is indicated by setting the location as SOURCE
-func (t *TradeWorkflowChaincode) prepareShipment(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) prepareShipment(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var elKey, shipmentLocationKey string
 	var shipmentLocationBytes, exportLicenseBytes []byte
 	var exportLicense *ExportLicense
@@ -692,7 +720,8 @@ func (t *TradeWorkflowChaincode) prepareShipment(stub shim.ChaincodeStubInterfac
 }
 
 // Accept a shipment and issue a B/L
-func (t *TradeWorkflowChaincode) acceptShipmentAndIssueBL(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) acceptShipmentAndIssueBL(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var shipmentLocationKey, blKey, tradeKey string
 	var shipmentLocationBytes, tradeAgreementBytes, billOfLadingBytes, exporterBytes, carrierBytes, beneficiaryBytes []byte
 	var billOfLading *BillOfLading
@@ -705,7 +734,12 @@ func (t *TradeWorkflowChaincode) acceptShipmentAndIssueBL(stub shim.ChaincodeStu
 	}
 
 	if len(args) != 5 {
-		err = errors.New(fmt.Sprintf("Incorrect number of arguments. Expecting 5: {Trade ID, B/L ID, Expiration Date, Source Port, Destination Port}. Found %d", len(args)))
+		err = errors.New(
+			fmt.Sprintf(
+				"Incorrect number of arguments. Expecting 5: {Trade ID, B/L ID, Expiration Date, Source Port, Destination Port}. Found %d",
+				len(args),
+			),
+		)
 		return shim.Error(err.Error())
 	}
 
@@ -769,8 +803,10 @@ func (t *TradeWorkflowChaincode) acceptShipmentAndIssueBL(stub shim.ChaincodeStu
 	}
 
 	// Create and record a B/L
-	billOfLading = &BillOfLading{args[1], args[2], string(exporterBytes), string(carrierBytes), tradeAgreement.DescriptionOfGoods,
-				     tradeAgreement.Amount, string(beneficiaryBytes), args[3], args[4]}
+	billOfLading = &BillOfLading{
+		args[1], args[2], string(exporterBytes), string(carrierBytes), tradeAgreement.DescriptionOfGoods,
+		tradeAgreement.Amount, string(beneficiaryBytes), args[3], args[4],
+	}
 	billOfLadingBytes, err = json.Marshal(billOfLading)
 	if err != nil {
 		return shim.Error("Error marshaling bill of lading structure")
@@ -791,7 +827,8 @@ func (t *TradeWorkflowChaincode) acceptShipmentAndIssueBL(stub shim.ChaincodeStu
 }
 
 // Request a payment
-func (t *TradeWorkflowChaincode) requestPayment(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) requestPayment(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var shipmentLocationKey, paymentKey, tradeKey string
 	var shipmentLocationBytes, paymentBytes, tradeAgreementBytes []byte
 	var tradeAgreement *TradeAgreement
@@ -854,16 +891,19 @@ func (t *TradeWorkflowChaincode) requestPayment(stub shim.ChaincodeStubInterface
 		return shim.Error(err.Error())
 	}
 
-	if len(paymentBytes) != 0 {	// The value doesn't matter as this is a temporary key used as a marker
+	if len(paymentBytes) != 0 { // The value doesn't matter as this is a temporary key used as a marker
 		fmt.Printf("Payment request already pending for trade %s\n", args[0])
 	} else {
 		// Check what has been paid up to this point
-		fmt.Printf("Amount paid thus far for trade %s = %d; total required = %d\n", args[0], tradeAgreement.Payment, tradeAgreement.Amount)
-		if tradeAgreement.Amount == tradeAgreement.Payment {	// Payment has already been settled
+		fmt.Printf(
+			"Amount paid thus far for trade %s = %d; total required = %d\n", args[0], tradeAgreement.Payment,
+			tradeAgreement.Amount,
+		)
+		if tradeAgreement.Amount == tradeAgreement.Payment { // Payment has already been settled
 			fmt.Printf("Payment already settled for trade %s\n", args[0])
 			return shim.Error("Payment already settled")
 		}
-		if string(shipmentLocationBytes) == SOURCE && tradeAgreement.Payment != 0 {	// Suppress duplicate requests for partial payment
+		if string(shipmentLocationBytes) == SOURCE && tradeAgreement.Payment != 0 { // Suppress duplicate requests for partial payment
 			fmt.Printf("Partial payment already made for trade %s\n", args[0])
 			return shim.Error("Partial payment already made")
 		}
@@ -879,7 +919,8 @@ func (t *TradeWorkflowChaincode) requestPayment(stub shim.ChaincodeStubInterface
 }
 
 // Make a payment
-func (t *TradeWorkflowChaincode) makePayment(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) makePayment(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var shipmentLocationKey, paymentKey, tradeKey string
 	var paymentAmount, expBal, impBal int
 	var shipmentLocationBytes, paymentBytes, tradeAgreementBytes, impBalBytes, expBalBytes []byte
@@ -968,7 +1009,7 @@ func (t *TradeWorkflowChaincode) makePayment(stub shim.ChaincodeStubInterface, c
 
 	// Record transfer of funds
 	if string(shipmentLocationBytes) == SOURCE {
-		paymentAmount = tradeAgreement.Amount/2
+		paymentAmount = tradeAgreement.Amount / 2
 	} else {
 		paymentAmount = tradeAgreement.Amount - tradeAgreement.Payment
 	}
@@ -1008,7 +1049,8 @@ func (t *TradeWorkflowChaincode) makePayment(stub shim.ChaincodeStubInterface, c
 }
 
 // Update shipment location; we will only allow SOURCE and DESTINATION as valid locations for this contract
-func (t *TradeWorkflowChaincode) updateShipmentLocation(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) updateShipmentLocation(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var shipmentLocationKey string
 	var shipmentLocationBytes []byte
 	var err error
@@ -1019,7 +1061,11 @@ func (t *TradeWorkflowChaincode) updateShipmentLocation(stub shim.ChaincodeStubI
 	}
 
 	if len(args) != 2 {
-		err = errors.New(fmt.Sprintf("Incorrect number of arguments. Expecting 1: {Trade ID, Location}. Found %d", len(args)))
+		err = errors.New(
+			fmt.Sprintf(
+				"Incorrect number of arguments. Expecting 1: {Trade ID, Location}. Found %d", len(args),
+			),
+		)
 		return shim.Error(err.Error())
 	}
 
@@ -1074,14 +1120,17 @@ func (t *TradeWorkflowChaincode) delete(stub shim.ChaincodeStubInterface, creato
 }*/
 
 // Get current state of a trade agreement
-func (t *TradeWorkflowChaincode) getTradeStatus(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) getTradeStatus(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var tradeKey, jsonResp string
 	var tradeAgreement TradeAgreement
 	var tradeAgreementBytes []byte
 	var err error
 
 	// Access control: Only an Importer or Exporter or Exporting Entity Org member can invoke this transaction
-	if !t.testMode && !(authenticateImporterOrg(creatorOrg, creatorCertIssuer) || authenticateExporterOrg(creatorOrg, creatorCertIssuer) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer)) {
+	if !t.testMode && !(authenticateImporterOrg(creatorOrg, creatorCertIssuer) || authenticateExporterOrg(
+		creatorOrg, creatorCertIssuer,
+	) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer)) {
 		return shim.Error("Caller not a member of Importer or Exporter or Exporting Entity Org. Access denied.")
 	}
 
@@ -1117,14 +1166,17 @@ func (t *TradeWorkflowChaincode) getTradeStatus(stub shim.ChaincodeStubInterface
 }
 
 // Get current state of a Letter of Credit
-func (t *TradeWorkflowChaincode) getLCStatus(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) getLCStatus(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var lcKey, jsonResp string
 	var letterOfCredit LetterOfCredit
 	var letterOfCreditBytes []byte
 	var err error
 
 	// Access control: Only an Importer or Exporter or Exporting Entity Org member can invoke this transaction
-	if !t.testMode && !(authenticateImporterOrg(creatorOrg, creatorCertIssuer) || authenticateExporterOrg(creatorOrg, creatorCertIssuer) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer)) {
+	if !t.testMode && !(authenticateImporterOrg(creatorOrg, creatorCertIssuer) || authenticateExporterOrg(
+		creatorOrg, creatorCertIssuer,
+	) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer)) {
 		return shim.Error("Caller not a member of Importer or Exporter or Exporting Entity Org. Access denied.")
 	}
 
@@ -1160,14 +1212,17 @@ func (t *TradeWorkflowChaincode) getLCStatus(stub shim.ChaincodeStubInterface, c
 }
 
 // Get current state of an Export License
-func (t *TradeWorkflowChaincode) getELStatus(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) getELStatus(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var elKey, jsonResp string
 	var exportLicense ExportLicense
 	var exportLicenseBytes []byte
 	var err error
 
 	// Access control: Only an Exporting Entity or Regulator Org member can invoke this transaction
-	if !t.testMode && !(authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer) || authenticateRegulatorOrg(creatorOrg, creatorCertIssuer)) {
+	if !t.testMode && !(authenticateExportingEntityOrg(
+		creatorOrg, creatorCertIssuer,
+	) || authenticateRegulatorOrg(creatorOrg, creatorCertIssuer)) {
 		return shim.Error("Caller not a member of Exporting Entity or Regulator Org. Access denied.")
 	}
 
@@ -1203,13 +1258,18 @@ func (t *TradeWorkflowChaincode) getELStatus(stub shim.ChaincodeStubInterface, c
 }
 
 // Get current location of a shipment
-func (t *TradeWorkflowChaincode) getShipmentLocation(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) getShipmentLocation(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var slKey, jsonResp string
 	var shipmentLocationBytes []byte
 	var err error
 
 	// Access control: Only an Importer or Exporter or Exporting Entity or Carrier Org member can invoke this transaction
-	if !t.testMode && !(authenticateImporterOrg(creatorOrg, creatorCertIssuer) || authenticateExporterOrg(creatorOrg, creatorCertIssuer) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer) || authenticateCarrierOrg(creatorOrg, creatorCertIssuer)) {
+	if !t.testMode && !(authenticateImporterOrg(creatorOrg, creatorCertIssuer) || authenticateExporterOrg(
+		creatorOrg, creatorCertIssuer,
+	) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer) || authenticateCarrierOrg(
+		creatorOrg, creatorCertIssuer,
+	)) {
 		return shim.Error("Caller not a member of Importer or Exporter or Exporting Entity or Carrier Org. Access denied.")
 	}
 
@@ -1239,13 +1299,18 @@ func (t *TradeWorkflowChaincode) getShipmentLocation(stub shim.ChaincodeStubInte
 }
 
 // Get Bill of Lading
-func (t *TradeWorkflowChaincode) getBillOfLading(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) getBillOfLading(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var blKey, jsonResp string
 	var billOfLadingBytes []byte
 	var err error
 
 	// Access control: Only an Importer or Exporter or Exporting Entity or Carrier Org member can invoke this transaction
-	if !t.testMode && !(authenticateImporterOrg(creatorOrg, creatorCertIssuer) || authenticateExporterOrg(creatorOrg, creatorCertIssuer) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer) || authenticateCarrierOrg(creatorOrg, creatorCertIssuer)) {
+	if !t.testMode && !(authenticateImporterOrg(creatorOrg, creatorCertIssuer) || authenticateExporterOrg(
+		creatorOrg, creatorCertIssuer,
+	) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer) || authenticateCarrierOrg(
+		creatorOrg, creatorCertIssuer,
+	)) {
 		return shim.Error("Caller not a member of Importer or Exporter or Exporting Entity or Carrier Org. Access denied.")
 	}
 
@@ -1273,7 +1338,8 @@ func (t *TradeWorkflowChaincode) getBillOfLading(stub shim.ChaincodeStubInterfac
 }
 
 // Get current account balance for a given participant
-func (t *TradeWorkflowChaincode) getAccountBalance(stub shim.ChaincodeStubInterface, creatorOrg string, creatorCertIssuer string, args []string) pb.Response {
+func (t *TradeWorkflowChaincode) getAccountBalance(stub shim.ChaincodeStubInterface, creatorOrg string,
+	creatorCertIssuer string, args []string) pb.Response {
 	var entity, balanceKey, jsonResp string
 	var balanceBytes []byte
 	var err error
@@ -1285,7 +1351,9 @@ func (t *TradeWorkflowChaincode) getAccountBalance(stub shim.ChaincodeStubInterf
 	entity = strings.ToLower(args[1])
 	if entity == "exporter" {
 		// Access control: Only an Exporter or Exporting Entity Org member can invoke this transaction
-		if !t.testMode && !(authenticateExporterOrg(creatorOrg, creatorCertIssuer) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer)) {
+		if !t.testMode && !(authenticateExporterOrg(
+			creatorOrg, creatorCertIssuer,
+		) || authenticateExportingEntityOrg(creatorOrg, creatorCertIssuer)) {
 			return shim.Error("Caller not a member of Exporter or Exporting Entity Org. Access denied.")
 		}
 		balanceKey = expBalKey
